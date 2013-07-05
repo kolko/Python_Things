@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+
+
 class DataExtractMixin(object):
     _fields = {}
     def __call__(self, fields):
@@ -39,7 +41,26 @@ class ParserNew(DataExtractMixin, object):
         return {'a': self.a, 'b': self.b, 'c': self.c}
 
 
+class DataExtractMixinWrap(object):
+    def __new__(self, fields):
+        cls = DataExtractMixin
+        cls.ExtractedFields = fields
+        return cls
 
+
+class ParserNew2(DataExtractMixinWrap(['a', 'b']), object):
+    def parse(self, data):
+        self.a = data['a']
+        self.b = data['b']
+        self.c = data['c']
+
+    def get_data(self):
+        #return parsed data
+        return [self.a, self.b, self.c]
+
+    def build(self):
+        #return original raw data
+        return {'a': self.a, 'b': self.b, 'c': self.c}
 
 if __name__ == '__main__':
     #super-puper raw binary protocol packets
@@ -84,6 +105,26 @@ if __name__ == '__main__':
 
     #new things
     pk_parser = ParserNew()
+    extract_data_list = []
+    for packet in packet_list:
+        extract_data = {}
+        extract_data_list.append(extract_data)
+        #init
+        pk_parser(extract_data)
+        #parse data
+        pk_parser.parse(packet)
+        data = pk_parser.get_data()
+        print data
+        #make changes in packet/or make new
+        pk_parser.a = data[0] + 10
+        #make raw
+        print pk_parser.build()
+
+    print extract_data_list
+
+
+    #new things 2
+    pk_parser = ParserNew2()
     extract_data_list = []
     for packet in packet_list:
         extract_data = {}
